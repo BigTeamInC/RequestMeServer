@@ -4,9 +4,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include "route/route.h"
+#include "route/route.cpp"
+#include "route/endpoints.h"
+#include "route/constants.h"
+#include "model/user.h"
+#include "model/user.c"
 
-int main()
-{
+int main() {
 
     char str[100];
     int listen_fd, conn_fd;
@@ -27,16 +32,26 @@ int main()
 
     conn_fd = accept(listen_fd, (struct sockaddr*) NULL, NULL);
 
-    while(1)
-    {
+    if(conn_fd > 1) {
+        presentRoutes();
+    }
+
+    while(1) {
 
         bzero( str, 100);
-
         read(conn_fd,str,100);
 
-        printf("Echoing back - %s",str);
+        User random;
+        random = randomUser();
+        printf("Echoing back - %s \n",(&random)->name);
 
-        write(conn_fd, str, strlen(str)+1);
+        char *res;
 
+        res = userToString(random);
+
+        write(conn_fd, res, strlen(res)+1);
+
+        free(res);
     }
 }
+

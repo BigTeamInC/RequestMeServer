@@ -62,9 +62,12 @@ void * thread_server (void* c) {
 
         free(res);
 
-        rc = pthread_mutex_unlock(&mutex);
         close(socket);
+        rc = pthread_mutex_unlock(&mutex);
+        break;
     }
+
+
 
     return 0;
 }

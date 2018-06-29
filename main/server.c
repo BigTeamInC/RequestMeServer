@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
 #include "route/route.h"
 #include "route/route.cpp"
 #include "route/endpoints.h"
@@ -11,10 +12,22 @@
 #include "model/user.h"
 #include "model/user.c"
 
+#include <string.h>
+//#include <wiringPi.h>
+//#include <softPwm.h>
+
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <pthread.h>
+
+
+#define MotorPin_A          4
+#define MotorPin_B          5
+
+int g_sta  = 1;
+int g_dir  = 1;
+int speed  = 50;
 
 typedef int SOCKET;
 typedef struct sockaddr_in SOCKADDR_IN;
@@ -31,6 +44,93 @@ int pthread_mutex_unlock(pthread_mutex_t *mut);
 int pthread_mutex_destroy(pthread_mutex_t *mut);
 
 
+/*______*/
+
+void motor(int status, int dir, int speed){
+
+    if(1 == status){
+        if(1 == dir){
+            digitalWrite(MotorPin_A, HIGH);
+            softPwmWrite(MotorPin_B, 100-speed);
+        }else{
+            digitalWrite(MotorPin_A, LOW);
+            softPwmWrite(MotorPin_B, speed);
+        }
+    }else{
+        digitalWrite(MotorPin_A, HIGH);
+        digitalWrite(MotorPin_B, HIGH);
+    }
+}
+
+void handle_request(char para[]){
+
+    const char * on = "on";
+    const char * off = "off";
+    const char * set = "set";
+
+    char * pch;
+
+    printf ("Splitting string \"%s\" into tokens:\n",para);
+
+    strtok (para,"\n");
+
+    printf (" %s  ++ \n",para);
+
+    int index = 0;
+    pch = strtok(para,"/");
+    printf ("look for %s\n",pch);
+
+    printf ("==  %d\n",  strcmp(pch, off) );
+
+    while (pch != NULL)
+    {
+
+        if( index == 0 ){
+
+            if(strcmp(pch, set) == 0) {
+                printf("rec = set 2\n");
+
+                pch = strtok (NULL, "/");
+                
+                int num = atoi(pch);
+
+                if (num == 0){
+                    printf ("stop\n");
+                    //(0,1,0);
+                } else{
+                    printf ("launch\n");
+                    //motor(1,1,num);
+                }
+
+                printf ("int = %d\n",num);
+                // motor(1,1,num);
+
+                break;
+            }
+        }
+
+        index++;
+        break;
+    }
+}
+
+int prepar_motor(){
+
+//    if(wiringPiSetup() == -1){
+//        printf("setup wiringPi failed !\n");
+//        return -1;
+//    }
+//
+//    pinMode(MotorPin_A, OUTPUT);
+//    pinMode(MotorPin_B, OUTPUT);
+//
+//    softPwmCreate(MotorPin_B, 0, 100);
+//    motor(1,1,1);
+    return 0;
+}
+
+/*______*/
+
 void * thread_server (void* c) {
 
     printf("thread_server \n");
@@ -45,26 +145,33 @@ void * thread_server (void* c) {
 
     while( 1 ) {
 
-        rc = pthread_mutex_lock(&mutex);
 
         bzero( str, 100);
-        read(socket,str,100);
+        ssize_t n = read(socket,str,100);
 
-        User random;
-        random = randomUser();
-        printf("Echoing back - %s \n",(&random)->name);
+        if(n<0){
+            puts("Error reading socket");
+            close(socket);
+        }
+        printf("Message : %s \n", str);
 
-        char *res;
-
-        res = userToString(random);
-
-        write(socket, res, strlen(res)+1);
-
-        free(res);
-
-        close(socket);
+        rc = pthread_mutex_lock(&mutex);
+        handle_request(str);
         rc = pthread_mutex_unlock(&mutex);
-        break;
+
+        //User random;
+        //random = randomUser();
+        //printf("Echoing back - %s \n",(&random)->name);
+
+        //char *res;
+
+        //res = userToString(random);
+
+        //write(socket, res, strlen(res)+1);
+
+        // free(res);
+
+        // break;
     }
 
 
@@ -74,6 +181,7 @@ void * thread_server (void* c) {
 
 
 int main() {
+
 
     int socket_desc , client_sock , c ;
     struct sockaddr_in server , client;
@@ -88,7 +196,7 @@ int main() {
     //Prepare the sockaddr_in structure
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = INADDR_ANY;
-    server.sin_port = htons( 8080 );
+    server.sin_port = htons( 8081);
 
     //Bind
     if( bind(socket_desc,(struct sockaddr *)&server , sizeof(server)) < 0)
@@ -98,6 +206,8 @@ int main() {
     }
 
     puts("Bind done");
+    int init_res =  prepar_motor();
+    printf("INIT = %d", init_res);
 
     //Listen
     listen(socket_desc , 3); // 3 connection queue
@@ -124,4 +234,3 @@ int main() {
         }
     }
 }
-

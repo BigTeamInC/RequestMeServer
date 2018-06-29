@@ -91,7 +91,7 @@ void handle_request(char para[]){
                 printf("rec = set 2\n");
 
                 pch = strtok (NULL, "/");
-                
+
                 int num = atoi(pch);
 
                 if (num == 0){
@@ -99,6 +99,8 @@ void handle_request(char para[]){
                     //(0,1,0);
                 } else{
                     printf ("launch\n");
+
+                    speed = num;
                     //motor(1,1,num);
                 }
 

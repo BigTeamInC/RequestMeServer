@@ -18,8 +18,8 @@
 
 
 #include <string.h>
-//#include <wiringPi.h>
-//#include <softPwm.h>
+#include <wiringPi.h>
+#include <softPwm.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -33,6 +33,11 @@
 int g_sta  = 1;
 int g_dir  = 1;
 int speed  = 50;
+
+Propeller propeller;
+Response response;
+Request request;
+
 
 typedef int SOCKET;
 typedef struct sockaddr_in SOCKADDR_IN;
@@ -142,6 +147,10 @@ void * thread_server (void* c) {
 
     printf("thread_server \n");
 
+    propeller = setPropellerUp();
+    response.propeller = &propeller;
+
+
     int rc = 0;
     int socket = *((int*)c);
     printf("sockect %d", socket);
@@ -162,6 +171,16 @@ void * thread_server (void* c) {
         }
         printf("Message : %s \n", str);
 
+        request = parseRequestElements(str);
+
+        if(request.requestSize < 2 || request.requestSize > 3) {
+            char* resp = responseToString(response);
+
+            write(socket, res, strlen(resp)+1);
+
+            free(resp);
+        }
+
         rc = pthread_mutex_lock(&mutex);
         handle_request(str);
         rc = pthread_mutex_unlock(&mutex);
@@ -173,10 +192,6 @@ void * thread_server (void* c) {
         //char *res;
 
         //res = userToString(random);
-
-        //write(socket, res, strlen(res)+1);
-
-        // free(res);
 
         // break;
     }

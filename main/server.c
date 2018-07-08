@@ -4,13 +4,18 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-
 #include "route/route.h"
 #include "route/route.cpp"
-#include "route/endpoints.h"
 #include "route/constants.h"
 #include "model/user.h"
 #include "model/user.c"
+#include "model/propeller.h"
+#include "model/propeller.c"
+#include "api/response.c"
+#include "api/response.h"
+#include "api/request.h"
+#include "api/request.c"
+
 
 #include <string.h>
 //#include <wiringPi.h>

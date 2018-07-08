@@ -37,6 +37,7 @@ char* userToString(User user) {
     sprintf(userAge,"%d", (&user)->age);
     sprintf(userMoney, "%d", (&user)->money);
 
+
     strcpy(res,"{ name : ");
     strcat(res,(&user)->name);
     strcat(res,", ");

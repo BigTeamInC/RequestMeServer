@@ -184,19 +184,7 @@ void * thread_server (void* c) {
         rc = pthread_mutex_lock(&mutex);
         handle_request(str);
         rc = pthread_mutex_unlock(&mutex);
-
-        //User random;
-        //random = randomUser();
-        //printf("Echoing back - %s \n",(&random)->name);
-
-        //char *res;
-
-        //res = userToString(random);
-
-        // break;
     }
-
-
 
     return 0;
 }

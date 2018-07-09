@@ -13,5 +13,10 @@ typedef struct Response {
 } Response;
 
 char* responseToString(Response response);
+void setBadRequest(Response* response);
+void setInternalError(Response* response);
+void setSuccess(Response* response);
+void setForbidden(Response* response);
+
 
 #endif //REQUESTMESERVER_RESPONSE_H

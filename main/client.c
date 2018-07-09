@@ -7,6 +7,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include "route/constants.h"
+#include "route/route.cpp"
+#include "route/route.h"
+
 
 char* buildRequestUrl(){
 
@@ -39,17 +42,21 @@ int main(int argc,char **argv) {
 
     inet_pton(AF_INET,"https://127.0.0.1",&(servaddr.sin_addr));
 
-    connect(sockfd,(struct sockaddr *)&servaddr,sizeof(servaddr));
-    printf("%d \n", servaddr.sin_addr.s_addr);
+    int connectRes = connect(sockfd,(struct sockaddr *)&servaddr,sizeof(servaddr));
 
+    if(connectRes != -1) {
 
-    while(1)
-    {
-        bzero( recvline, 100);
-        char* requestUrl = buildRequestUrl();
+        presentRoutes();
 
-        write(sockfd,sendline,strlen(sendline)+1);
-        read(sockfd,recvline,100);
-        printf("%s",recvline);
+        while(1)
+        {
+            bzero( recvline, 100);
+            char* requestUrl = buildRequestUrl();
+
+            write(sockfd,sendline,strlen(sendline)+1);
+            read(sockfd,recvline,100);
+            printf("%s",recvline);
+        }
     }
+
 }

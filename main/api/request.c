@@ -8,12 +8,15 @@ Request parseRequestElements(char url[]) {
     Request request;
     request.requestSize = 0;
     char* urlSegment;
-    urlSegment = strtok(url, "?=");
+    if(url != NULL) {
+        urlSegment = strtok(url, "?=");
 
-    while(urlSegment != NULL) {
-        request.urlElements[request.requestSize] = urlSegment;
-        request.requestSize += 1;
-        urlSegment = strtok(NULL,"?=");
+        while(urlSegment != NULL) {
+            request.urlElements[request.requestSize] = urlSegment;
+            request.requestSize += 1;
+            urlSegment = strtok(NULL,"?=");
+        }
     }
+
     return request;
 }

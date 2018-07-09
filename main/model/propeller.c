@@ -52,6 +52,5 @@ void setCurrentSpeed(Propeller *propeller, int speed){
     propeller->speedsArrayLength += 1;
     propeller->currentSpeed = speed;
     propeller->previousSpeeds[propeller->speedsArrayLength] = propeller->currentSpeed;
-    printf("%d\n", propeller->currentSpeed);
 }
 

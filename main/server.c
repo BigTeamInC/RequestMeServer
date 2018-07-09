@@ -18,8 +18,8 @@
 
 
 #include <string.h>
-#include <wiringPi.h>
-#include <softPwm.h>
+//#include <wiringPi.h>
+//#include <softPwm.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -37,6 +37,7 @@ int speed  = 50;
 Propeller propeller;
 Response response;
 Request request;
+int socket_desc;
 
 
 typedef int SOCKET;
@@ -56,6 +57,7 @@ int pthread_mutex_destroy(pthread_mutex_t *mut);
 
 /*______*/
 
+
 void motor(int status, int dir, int speed){
 
     if(1 == status){
@@ -73,7 +75,52 @@ void motor(int status, int dir, int speed){
 }
 
 void handle_request(char para[]){
+    //TODO parse request here
+    request = parseRequestElements(para);
+    if(request.requestSize < 2 || request.requestSize > 3) {
 
+        setBadRequest(&response);
+
+        char* resp = responseToString(response);
+        write(socket_desc, resp, strlen(resp)+1);
+        free(resp);
+
+    } else if(strcmp(request.urlElements[request.requestSize - 1], "on") == 0) {
+
+        //TODO put your default on speed
+        setCurrentSpeed(&propeller, 10);
+
+        char* resp = responseToString(response);
+        write(socket_desc, resp, strlen(resp)+1);
+        free(resp);
+
+
+    } else if(strcmp(request.urlElements[request.requestSize - 1], "off") == 0) {
+
+        setCurrentSpeed(&propeller, 0);
+
+        setSuccess(&response);
+        char* resp = responseToString(response);
+        write(socket_desc, resp, strlen(resp)+1);
+        free(resp);
+
+    } else {
+
+        char* speedString = request.urlElements[request.requestSize - 1];
+
+        int speedInt  = atoi(speedString);
+
+        setCurrentSpeed(&propeller, speedInt);
+
+        setSuccess(&response);
+
+        char* resp = responseToString(response);
+        write(socket_desc, resp, strlen(resp)+1);
+        free(resp);
+
+    }
+
+    /*
     const char * on = "on";
     const char * off = "off";
     const char * set = "set";
@@ -109,7 +156,8 @@ void handle_request(char para[]){
                     //(0,1,0);
                 } else{
                     printf ("launch\n");
-
+                    //TODO set propeller current speed
+                    //TODO write response to client here
                     speed = num;
                     //motor(1,1,num);
                 }
@@ -124,6 +172,7 @@ void handle_request(char para[]){
         index++;
         break;
     }
+    */
 }
 
 int prepar_motor(){
@@ -147,17 +196,11 @@ void * thread_server (void* c) {
 
     printf("thread_server \n");
 
-    propeller = setPropellerUp();
-    response.propeller = &propeller;
-
-
     int rc = 0;
     int socket = *((int*)c);
     printf("sockect %d", socket);
 
     char str[100];
-
-    presentRoutes();
 
     while( 1 ) {
 
@@ -165,25 +208,19 @@ void * thread_server (void* c) {
         bzero( str, 100);
         ssize_t n = read(socket,str,100);
 
+
         if(n<0){
             puts("Error reading socket");
             close(socket);
         }
         printf("Message : %s \n", str);
 
-        request = parseRequestElements(str);
-
-        if(request.requestSize < 2 || request.requestSize > 3) {
-            char* resp = responseToString(response);
-
-            write(socket, res, strlen(resp)+1);
-
-            free(resp);
-        }
+        //printf("%s", str);
 
         rc = pthread_mutex_lock(&mutex);
         handle_request(str);
         rc = pthread_mutex_unlock(&mutex);
+
     }
 
     return 0;
@@ -192,8 +229,12 @@ void * thread_server (void* c) {
 
 int main() {
 
+    propeller = setPropellerUp();
+    response.propeller = &propeller;
 
-    int socket_desc , client_sock , c ;
+
+    //TODO make socket global so we can write in handleRequest()
+    int client_sock , c ;
     struct sockaddr_in server , client;
 
     //Create socket

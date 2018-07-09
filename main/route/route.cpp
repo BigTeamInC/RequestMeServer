@@ -4,7 +4,8 @@
 void presentRoutes() {
 
     printf("********************        REQUEST ME SOCKET USAGE IS                  ********************\n");
-    printf("********************    Enter user corresponding number                 ********************\n");
-    printf("********************    http://host:8081/user for complete information  ********************\n");
-    printf("********************    http://host:8081/user/give for send money       ********************\n");
+    printf("********************    https://127.0.0.1:8081/propeller?on             ********************\n");
+    printf("********************    https://127.0.0.1:8081/propeller?off            ********************\n");
+    printf("********************    https://127.0.0.1:8081/propeller?speed=n        ********************\n");
+
 }

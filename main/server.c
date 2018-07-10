@@ -18,8 +18,8 @@
 
 
 #include <string.h>
-//#include <wiringPi.h>
-//#include <softPwm.h>
+#include <wiringPi.h>
+#include <softPwm.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -33,6 +33,7 @@
 int g_sta  = 1;
 int g_dir  = 1;
 int speed  = 50;
+int port = 8088;
 
 Propeller propeller;
 Response response;
@@ -74,119 +75,77 @@ void motor(int status, int dir, int speed){
     }
 }
 
-void handle_request(char para[]){
+void handle_request(char para[], int socket_client){
     //TODO parse request here
     request = parseRequestElements(para);
+
+    printf("%d\n", request.requestSize);
+
     if(request.requestSize < 2 || request.requestSize > 3) {
 
         setBadRequest(&response);
 
         char* resp = responseToString(response);
-        write(socket_desc, resp, strlen(resp)+1);
+        write(socket_client, resp, strlen(resp)+1);
         free(resp);
 
     } else if(strcmp(request.urlElements[request.requestSize - 1], "on") == 0) {
 
         //TODO put your default on speed
-        setCurrentSpeed(&propeller, 10);
+        speed = 40;
+        motor(1,1,speed);
+
+        setCurrentSpeed(&propeller, speed);
 
         char* resp = responseToString(response);
-        write(socket_desc, resp, strlen(resp)+1);
+        write(socket_client, resp, strlen(resp)+1);
         free(resp);
 
 
     } else if(strcmp(request.urlElements[request.requestSize - 1], "off") == 0) {
 
-        setCurrentSpeed(&propeller, 0);
+        speed = 1;
+        motor(1,1,speed);
+
+        setCurrentSpeed(&propeller, 1);
 
         setSuccess(&response);
         char* resp = responseToString(response);
-        write(socket_desc, resp, strlen(resp)+1);
+        write(socket_client, resp, strlen(resp)+1);
         free(resp);
 
     } else {
 
         char* speedString = request.urlElements[request.requestSize - 1];
 
-        int speedInt  = atoi(speedString);
+        speed  = atoi(speedString);
+        motor(1,1,speed);
 
-        setCurrentSpeed(&propeller, speedInt);
+        setCurrentSpeed(&propeller, speed);
 
         setSuccess(&response);
 
         char* resp = responseToString(response);
-        write(socket_desc, resp, strlen(resp)+1);
+        write(socket_client, resp, strlen(resp)+1);
         free(resp);
-
     }
 
-    /*
-    const char * on = "on";
-    const char * off = "off";
-    const char * set = "set";
-
-    char * pch;
-
-    printf ("Splitting string \"%s\" into tokens:\n",para);
-
-    strtok (para,"\n");
-
-    printf (" %s  ++ \n",para);
-
-    int index = 0;
-    pch = strtok(para,"/");
-    printf ("look for %s\n",pch);
-
-    printf ("==  %d\n",  strcmp(pch, off) );
-
-    while (pch != NULL)
-    {
-
-        if( index == 0 ){
-
-            if(strcmp(pch, set) == 0) {
-                printf("rec = set 2\n");
-
-                pch = strtok (NULL, "/");
-
-                int num = atoi(pch);
-
-                if (num == 0){
-                    printf ("stop\n");
-                    //(0,1,0);
-                } else{
-                    printf ("launch\n");
-                    //TODO set propeller current speed
-                    //TODO write response to client here
-                    speed = num;
-                    //motor(1,1,num);
-                }
-
-                printf ("int = %d\n",num);
-                // motor(1,1,num);
-
-                break;
-            }
-        }
-
-        index++;
-        break;
-    }
-    */
+    char* clear_ = "\n";
+    write(socket_client, clear_, strlen(clear_)+1);
 }
 
 int prepar_motor(){
 
-//    if(wiringPiSetup() == -1){
-//        printf("setup wiringPi failed !\n");
-//        return -1;
-//    }
-//
-//    pinMode(MotorPin_A, OUTPUT);
-//    pinMode(MotorPin_B, OUTPUT);
-//
-//    softPwmCreate(MotorPin_B, 0, 100);
-//    motor(1,1,1);
+   if(wiringPiSetup() == -1){
+       printf("setup wiringPi failed !\n");
+       return -1;
+   }
+
+   pinMode(MotorPin_A, OUTPUT);
+   pinMode(MotorPin_B, OUTPUT);
+
+   softPwmCreate(MotorPin_B, 0, 100);
+   motor(1,1,1);
     return 0;
 }
 
@@ -198,27 +157,25 @@ void * thread_server (void* c) {
 
     int rc = 0;
     int socket = *((int*)c);
-    printf("sockect %d", socket);
+    printf("sockect %d \n", socket);
 
     char str[100];
+    int on_ = 1;
 
-    while( 1 ) {
-
+    while( on_ ) {
 
         bzero( str, 100);
         ssize_t n = read(socket,str,100);
 
-
-        if(n<0){
+        if(n<0 || n == 0){
             puts("Error reading socket");
             close(socket);
+            on_ = 0;
         }
         printf("Message : %s \n", str);
 
-        //printf("%s", str);
-
         rc = pthread_mutex_lock(&mutex);
-        handle_request(str);
+        handle_request(str, socket);
         rc = pthread_mutex_unlock(&mutex);
 
     }
@@ -247,7 +204,7 @@ int main() {
     //Prepare the sockaddr_in structure
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = INADDR_ANY;
-    server.sin_port = htons( 8081);
+    server.sin_port = htons( port);
 
     //Bind
     if( bind(socket_desc,(struct sockaddr *)&server , sizeof(server)) < 0)
@@ -258,7 +215,8 @@ int main() {
 
     puts("Bind done");
     int init_res =  prepar_motor();
-    printf("INIT = %d", init_res);
+    printf("INIT = %d \n", init_res);
+    printf("PORT = %d \n", port);
 
     //Listen
     listen(socket_desc , 3); // 3 connection queue

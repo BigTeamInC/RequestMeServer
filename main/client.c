@@ -10,11 +10,12 @@
 #include "route/route.cpp"
 #include "route/route.h"
 
+int port = 8088;
 
 char* buildRequestUrl(){
 
     char sendline[END_POINT_MAX_LENGHT];
-    char * apiAddress = "https://127.0.0.1:8081/propeller?";
+    char * apiAddress = "https://127.0.0.1:8080/propeller?";
     char * apiRequestAddress = malloc(sizeof(char) * 20);
 
     bzero( sendline, END_POINT_MAX_LENGHT);
@@ -38,7 +39,7 @@ int main(int argc,char **argv) {
     bzero(&servaddr,sizeof servaddr);
 
     servaddr.sin_family=AF_INET;
-    servaddr.sin_port=htons(8081);
+    servaddr.sin_port=htons(port);
 
     inet_pton(AF_INET,"https://127.0.0.1",&(servaddr.sin_addr));
 

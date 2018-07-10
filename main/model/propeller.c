@@ -10,13 +10,13 @@ char* propellerToString(Propeller* propeller) {
     sprintf(currentSpeed,"%d", propeller->currentSpeed);
     sprintf(speedsArrayLength, "%d", propeller->speedsArrayLength);
 
-    strcpy(res,"{ currentSpeed : ");
+    strcpy(res,"{ \"currentSpeed\" : ");
     strcat(res,currentSpeed);
     strcat(res,", ");
-    strcat(res,"speedsArrayLength : ");
+    strcat(res,"\"speedsArrayLength\" : ");
     strcat(res,speedsArrayLength);
     strcat(res,", ");
-    strcat(res,"previousSpeeds : [");
+    strcat(res," \"previousSpeeds\" : [");
 
     if(propeller->speedsArrayLength > 0) {
         for(int i = 0; i < propeller->speedsArrayLength; i++) {
@@ -41,16 +41,25 @@ Propeller setPropellerUp() {
     propeller.speedsArrayLength = 0;
     propeller.currentSpeed = 0;
 
-    //TODO tobeFree
-    propeller.previousSpeeds = malloc(sizeof(int) * 1);
-
     return propeller;
 }
 
 
 void setCurrentSpeed(Propeller *propeller, int speed){
-    propeller->speedsArrayLength += 1;
+
     propeller->currentSpeed = speed;
-    propeller->previousSpeeds[propeller->speedsArrayLength] = propeller->currentSpeed;
+
+    if(propeller->speedsArrayLength < 4) {
+        propeller->previousSpeeds[propeller->speedsArrayLength] = propeller->currentSpeed;
+        propeller->speedsArrayLength += 1;
+    } else if(propeller->speedsArrayLength == 4 || propeller->speedsArrayLength > 4){
+
+        for(int i = 0; i < 3; i++) {
+            int tmpNew = propeller->previousSpeeds[i  + 1];
+            propeller->previousSpeeds[i] = tmpNew;
+        }
+
+        propeller->previousSpeeds[3] = propeller->currentSpeed;
+    }
 }
 

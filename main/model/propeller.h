@@ -6,7 +6,7 @@ typedef struct  Propeller{
 
     int currentSpeed;
     int speedsArrayLength;
-    int *previousSpeeds;
+    int previousSpeeds[4];
 
 } Propeller;
 

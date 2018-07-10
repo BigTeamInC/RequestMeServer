@@ -12,13 +12,13 @@ char* responseToString(Response response) {
     Propeller* propeller = (&response)->propeller;
     char* propellerString = propellerToString(propeller);
 
-    strcpy(res, "{ status : ");
+    strcpy(res, "{ \"status\" : ");
     strcat(res, (&response)->status);
     strcat(res, " , ");
-    strcat(res,"message : ");
+    strcat(res,"\"message\" : ");
     strcat(res, (&response)->message);
     strcat(res, " , ");
-    strcat(res, "propeller : ");
+    strcat(res, "\"propeller\" : ");
     strcat(res, propellerString);
     strcat(res, " }");
 
